@@ -115,7 +115,7 @@ class MediaSessionManager(
 
     private fun observeMediaNotificationControls() {
         launch {
-            settings.defaultMediaNotificationControlsFlow.collectLatest {
+            settings.defaultMediaNotificationControlsFlow.collect {
                 withContext(Dispatchers.Main) {
                     val playbackStateCompat = getPlaybackStateCompat(playbackManager.playbackStateRelay.blockingFirst(), currentEpisode = playbackManager.getCurrentEpisode())
                     updatePlaybackState(playbackStateCompat)
