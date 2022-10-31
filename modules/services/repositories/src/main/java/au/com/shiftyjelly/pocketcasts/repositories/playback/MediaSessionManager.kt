@@ -50,6 +50,7 @@ import timber.log.Timber
 import java.util.Timer
 import java.util.TimerTask
 import kotlin.coroutines.CoroutineContext
+import kotlinx.coroutines.flow.collectLatest
 import au.com.shiftyjelly.pocketcasts.images.R as IR
 
 class MediaSessionManager(
@@ -104,11 +105,23 @@ class MediaSessionManager(
 
     fun startObserving() {
         observePlaybackState()
+        observeMediaNotificationControls()
         playbackManager.upNextQueue.changesObservable
             .observeOn(Schedulers.io())
             .doOnNext { updateUpNext(it) }
             .subscribeBy(onError = { Timber.e(it) })
             .addTo(disposables)
+    }
+
+    private fun observeMediaNotificationControls() {
+        launch {
+            settings.defaultMediaNotificationControlsFlow.collectLatest {
+                withContext(Dispatchers.Main) {
+                    val playbackStateCompat = getPlaybackStateCompat(playbackManager.playbackStateRelay.blockingFirst(), currentEpisode = playbackManager.getCurrentEpisode())
+                    updatePlaybackState(playbackStateCompat)
+                }
+            }
+        }
     }
 
     private fun connect() {
